@@ -4,7 +4,7 @@ import contextlib
 import faulthandler
 import io
 import os
-import multiprocessing
+import multiprocess
 import platform
 import signal
 import tempfile
@@ -36,11 +36,13 @@ def check_correctness(problem: Dict, completion: str, timeout: float,
 
             # Construct the check program and run it.
             check_program = (
-                problem["prompt"] + completion + "\n" +
+                #problem["prompt"] + completion + "\n" +
+                completion + "\n" +
                 problem["test"] + "\n" +
                 f"check({problem['entry_point']})"
             )
 
+            print(check_program)
             try:
                 exec_globals = {}
                 with swallow_io():
@@ -55,7 +57,7 @@ def check_correctness(problem: Dict, completion: str, timeout: float,
 # information on how OpenAI sandboxes its code, see the accompanying paper.
 # Once you have read this disclaimer and taken appropriate precautions, 
 # uncomment the following line and proceed at your own risk:
-#                         exec(check_program, exec_globals)
+                        exec(check_program, exec_globals)
                 result.append("passed")
             except TimeoutException:
                 result.append("timed out")
@@ -67,10 +69,10 @@ def check_correctness(problem: Dict, completion: str, timeout: float,
             os.rmdir = rmdir
             os.chdir = chdir
 
-    manager = multiprocessing.Manager()
+    manager = multiprocess.Manager()
     result = manager.list()
 
-    p = multiprocessing.Process(target=unsafe_execute)
+    p = multiprocess.Process(target=unsafe_execute)
     p.start()
     p.join(timeout=timeout + 1)
     if p.is_alive():
